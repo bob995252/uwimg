@@ -86,7 +86,6 @@ float do_conv_cal(image im, image filter, int x, int y, int z){
             count = count + 1;
         }
     }
-    //printf("conv_sum = %f\n", conv_sum);
     return conv_sum;
 }
 
@@ -135,12 +134,6 @@ image convolve_image(image im, image filter, int preserve)
                 }
             }
         }
-        /*
-        for(k = 0; k < im.c; ++k){
-            for (j = 0; j < im.h; ++j){
-                for (i = 0; i < im.w; ++i){
-                    if (k == 0 && j ==0) printf("pixel = %f\n", get_pixel(conv_im, i, j, k));
-                }}}*/
         return conv_im;
     }
     else {
@@ -165,23 +158,56 @@ image convolve_image(image im, image filter, int preserve)
 image make_highpass_filter()
 {
     // TODO
-    return make_image(1,1,1);
+    image highpass_filter = make_image(3, 3, 1);
+    int filter_element[9];
+    for (int i = 0; i<9; ++i) filter_element[i] = 0;
+    filter_element[1] = -1;
+    filter_element[3] = -1;
+    filter_element[4] = 4;
+    filter_element[5] = -1;
+    filter_element[7] = -1;
+    for (int j = 0; j<3; ++j)
+        for (int i = 0; i<3; ++i) set_pixel(highpass_filter, i, j, 0, filter_element[i+j*3]);
+    return highpass_filter;
 }
 
 image make_sharpen_filter()
 {
     // TODO
-    return make_image(1,1,1);
+    image sharpen_filter = make_image(3, 3, 1);
+    int filter_element[9];
+    for (int i = 0; i<9; ++i) filter_element[i] = 0;
+    filter_element[1] = -1;
+    filter_element[3] = -1;
+    filter_element[4] = 5;
+    filter_element[5] = -1;
+    filter_element[7] = -1;
+    for (int j = 0; j<3; ++j)
+        for (int i = 0; i<3; ++i) set_pixel(sharpen_filter, i, j, 0, filter_element[i+j*3]);
+    return sharpen_filter;
 }
+
 
 image make_emboss_filter()
 {
     // TODO
-    return make_image(1,1,1);
+    image emboss_filter = make_image(3, 3, 1);
+    int filter_element[9];
+    for (int i = 0; i<9; ++i) filter_element[i] = 1;
+    filter_element[0] = -2;
+    filter_element[1] = -1;
+    filter_element[2] = 0;
+    filter_element[3] = -1;
+    filter_element[6] = 0;
+    filter_element[8] = 2;
+    for (int j = 0; j<3; ++j)
+        for (int i = 0; i<3; ++i) set_pixel(emboss_filter, i, j, 0, filter_element[i+j*3]);
+    return emboss_filter;
 }
 
 // Question 2.2.1: Which of these filters should we use preserve when we run our convolution and which ones should we not? Why?
-// Answer: TODO
+// Answer: 
+
 
 // Question 2.2.2: Do we have to do any post-processing for the above filters? Which ones and why?
 // Answer: TODO

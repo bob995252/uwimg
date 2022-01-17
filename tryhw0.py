@@ -1,5 +1,4 @@
 from uwimg import *
-# ?
 # 1. Getting and setting pixels
 im = load_image("data/dog.jpg")
 for row in range(im.h):

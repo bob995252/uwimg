@@ -1,5 +1,4 @@
 from uwimg import *
-
 # ?
 I don't get it.
 # 1. Getting and setting pixels

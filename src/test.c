@@ -82,6 +82,7 @@ int same_image(image a, image b, float eps)
         if (thresh > eps) eps = thresh;
         if(!within_eps(a.data[i], b.data[i], eps)) 
         {
+            printf(" i = %d", i);
             printf("The value should be %f, but it is %f! \n", b.data[i], a.data[i]);
             return 0;
         }
@@ -253,6 +254,7 @@ void test_bl_resize()
     free_image(im2);
     free_image(resized2);
     free_image(gt2);
+    //scanf("?");
 }
 
 void test_multiple_resize()

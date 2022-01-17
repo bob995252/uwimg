@@ -77,14 +77,16 @@ image make_box_filter(int w)
 }
 
 float do_conv_cal(image im, image filter, int x, int y, int z){
-    int i, j, filter_c;
+    int i, j, filter_c, count=0;
     float conv_sum=0;
     filter_c = (im.c > filter.c) ? 0 : z;
     for (j = 0; j < filter.h; ++j){
         for (i = 0; i < filter.w; ++i){
-            conv_sum = conv_sum + get_pixel(im, x+i-1, y+j-1, z) * get_pixel(filter, i, j, filter_c);
+            conv_sum = conv_sum + get_pixel(im, x+i-filter.w/2, y+j-filter.h/2, z) * get_pixel(filter, i, j, filter_c);
+            count = count + 1;
         }
     }
+    //printf("conv_sum = %f\n", conv_sum);
     return conv_sum;
 }
 
@@ -133,11 +135,12 @@ image convolve_image(image im, image filter, int preserve)
                 }
             }
         }
+        /*
         for(k = 0; k < im.c; ++k){
             for (j = 0; j < im.h; ++j){
                 for (i = 0; i < im.w; ++i){
                     if (k == 0 && j ==0) printf("pixel = %f\n", get_pixel(conv_im, i, j, k));
-                }}}
+                }}}*/
         return conv_im;
     }
     else {

@@ -11,10 +11,8 @@ float get_pixel(image im, int x, int y, int c)
     x = (x < 0) ? 0: ( (x >= im.w) ? im.w-1: x);
     y = (y < 0) ? 0: ( (y >= im.h) ? im.h-1: y);
     c = (c < 0) ? 0: ( (c > 2) ? 2: c);
-
     pixel_index = x + y * im.w + c * im.h * im.w;
-    if (x < 0 || y< 0 || c < 0 || x >= im.w || y >= im.h || c > 2) return 0;
-    else return im.data[pixel_index];
+    return im.data[pixel_index];
 }
 
 void set_pixel(image im, int x, int y, int c, float v)

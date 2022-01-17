@@ -132,12 +132,12 @@ image convolve_image(image im, image filter, int preserve)
                     set_pixel(conv_im, i, j, k, conv_sum);
                 }
             }
-        }
+        }/*
         for(k = 0; k < im.c; ++k){
             for (j = 0; j < im.h; ++j){
                 for (i = 0; i < im.w; ++i){
                     if (k == 0 && j ==0) printf("pixel = %f\n", get_pixel(conv_im, i, j, k));
-                }}}
+                }}}*/
         return conv_im;
     }
     else {

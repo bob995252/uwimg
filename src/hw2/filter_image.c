@@ -206,11 +206,16 @@ image make_emboss_filter()
 }
 
 // Question 2.2.1: Which of these filters should we use preserve when we run our convolution and which ones should we not? Why?
-// Answer: 
+// Answer: We should preserve the channels for emboss and sharpen filters because the purpose of these two filters is 
+//         changing the style of pics. As a result, the color of pics should look like one before change. On the other hand, 
+//         there is no need to preserve channels for the highpass filter, which is used to detect the edge of objects where 
+//         possesses high frequencies. Accordingly, we only care about the skeleton of objects instead of the color of pics.
 
 
 // Question 2.2.2: Do we have to do any post-processing for the above filters? Which ones and why?
-// Answer: TODO
+// Answer: Each of them should do the clamping after we convolute the pics. This is because when we employ the filter to convolute
+//         the pics, it is possible the pixels become larger or less than the bounds ([0, 1] or [0, 255]). As a result, each of 
+//         filters should do post-processing. 
 
 image make_gaussian_filter(float sigma)
 {

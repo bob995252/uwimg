@@ -22,20 +22,12 @@ void set_pixel(image im, int x, int y, int c, float v)
     int im_h = im.h;
     int im_w = im.w;
     const int pixel_index = c * im_h * im_w + x + y * im_w;
-
+    //printf("F?");
     // Check if the coordinate is valid:
-    if (x >= 0 && x <= im_w && y >= 0 && y <= im_h){
-        //printf("h = %d\n", im.h);
-        //printf("w = %d\n", im.w);
-        /*for (int i = 0; i<im_h*im_w*im.c; i++){
-            printf("%d value = %f\n", i, im.data[i]);
-        }*/
-        //printf("B4 value = %f\n", im.data[pixel_index]);
-        //printf("af value = %f\n", im.data[pixel_index]);
+    if (x >= 0 && x < im_w && y >= 0 && y < im_h && c >= 0 && c < im.c){
         // set pixel value at a certain coordinate:
         im.data[pixel_index] = v;
     }
-
 }
 
 image copy_image(image im)

@@ -68,8 +68,16 @@ def field_panorama():
     save_image(pan5, "field_panorama_5")
 
 draw_corners()
-draw_matches()
-easy_panorama()
+#draw_matches()
+#easy_panorama()
+im = load_image("data/dogbw.png")
+im = structure_matrix(im, 2)
+im = cornerness_response(im)
+feature_normalize(im)
+#l1_normalize(im)
+#save_image(im, "structure")
+save_image(im, "response")
+
+
 #rainier_panorama()
 #field_panorama()
-

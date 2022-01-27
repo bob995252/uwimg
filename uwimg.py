@@ -167,6 +167,10 @@ make_gx_filter = lib.make_gx_filter
 make_gx_filter.argtypes = []
 make_gx_filter.restype = IMAGE
 
+nms_image = lib.nms_image
+nms_image.argtypes = []
+nms_image.restype = IMAGE
+
 sobel_image = lib.sobel_image
 sobel_image.argtypes = [IMAGE]
 sobel_image.restype = POINTER(IMAGE)
@@ -202,6 +206,10 @@ cylindrical_project.restype = IMAGE
 structure_matrix = lib.structure_matrix
 structure_matrix.argtypes = [IMAGE, c_float]
 structure_matrix.restype = IMAGE
+
+cornerness_response = lib.cornerness_response
+cornerness_response.argtypes = [IMAGE]
+cornerness_response.restype = IMAGE
 
 find_and_draw_matches = lib.find_and_draw_matches
 find_and_draw_matches.argtypes = [IMAGE, IMAGE, c_float, c_float, c_int]

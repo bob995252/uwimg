@@ -135,7 +135,7 @@ image structure_matrix(image im, float sigma)
     // TODO: calculate structure matrix for im.
     image Ix = make_gx_filter();
     image Iy = make_gy_filter();
-    image gauss_filter = make_gaussian_filter(sigma);
+    //image gauss_filter = make_gaussian_filter(sigma);
     S1 = convolve_image(im, Ix, 0);
     S2 = convolve_image(im, Iy, 0);
     for (j = 0; j < im.h; ++j){
@@ -179,178 +179,33 @@ image cornerness_response(image S)
 // int w: distance to look for larger responses.
 // returns: image with only local-maxima responses within w pixels.
 
-
-void connectStrong(image r, int StrongRow, int StrongCol, int **flag)
-{
-    int x, y;
-    for (int j = -1; j<2; ++j){
-        for (int i = -1; i<2; ++i){
-            x = (StrongRow + i < 0) ? 0: ( (StrongRow + i >= r.w) ? r.w-1: StrongRow + i);
-            y = (StrongCol + j < 0) ? 0: ( (StrongCol + j >= r.h) ? r.h-1: StrongCol + j);
-            //printf("x = %d, y = %d \n", x, y);
-            if (get_pixel(r, StrongRow + i, StrongCol + j, 0) > 0 &&
-                get_pixel(r, StrongRow + i, StrongCol + j, 0) < 1 && flag[x][y] == 0) {
-                set_pixel(r, StrongRow + i, StrongCol + j, 0, 1);
-                flag[x][y] = 1;
-                connectStrong(r, StrongRow + i, StrongCol + j, flag);
-            }
+int nms_window(image im, int w, int i, int j){
+    float largest = get_pixel(im, i, j, 0);
+    int window_size = 2 * w + 1, x, y;
+    for (y = 0; y < window_size; ++y){
+        for (x = 0; x < window_size; ++x){
+            if (get_pixel(im, i+x-window_size/2, j+y-window_size/2, 0) > largest) return 1;
         }
     }
+    // Because the response may be smaller than zero?
+    return 0;
 }
 
 image nms_image(image im, int w)
 {
-    //image r = copy_image(im);
-    
-    image r = make_image(im.w, im.h, 1);
-    //printf("r.w = %d, r.h = %d, r.c = %d\n", r.w, r.h, r.c);
-    image *res, mag, theta;
-    int i, j, neigh, yr[2], yl[2], xr[2], xl[2], strong_ind=0, weak_ind=0;
-    int *StrongCol, *StrongRow, *WeakCol, *WeakRow, **flag;
-    float theta_radian, right_pixel, left_pixel, target, HighThre = 0.2, LowThre = 0.05;
-    res = sobel_image(im);
-    mag = res[0];
-    theta = res[1];
-    feature_normalize(mag);
-    //feature_normalize2(theta);
-
+    image r = copy_image(im);
+    int i, j, window;
+    window = 2 * w + 1;
+    for (j = 0; j<im.h; ++j){
+        for (i = 0; i<im.w; ++i){
+            if (nms_window(im, w, i, j)) set_pixel(r, i, j, 0, -999999);
+        }
+    }
     // TODO: perform NMS on the response map.
-    for (j = 0; j < im.h; ++j){
-        for (i = 0; i < im.w; ++i){
-            theta_radian = get_pixel(theta, i, j, 0);
-            if ((theta_radian >=0 && theta_radian <= PI/4.) || (theta_radian <= -3./4.*PI && theta_radian > -PI)){
-                //for (neigh = 0; neigh < w; ++neigh){
-                xr[0] = i+1;
-                yr[0] = j;
-                xr[1] = i+1;
-                yr[1] = j-1;
-                xl[0] = i-1;
-                yl[0] = j;
-                xl[1] = i-1;
-                yl[1] = j+1;
-                target = get_pixel(mag, i, j, 0);
-                right_pixel = get_pixel(mag, xr[0], yr[0], 0) 
-                            + tan(theta_radian) * (get_pixel(mag, xr[1], yr[1], 0) - get_pixel(mag, xr[0], yr[0], 0));
-                left_pixel = get_pixel(mag, xl[0], yl[0], 0) 
-                            + tan(theta_radian) * (get_pixel(mag, xl[1], yl[1], 0) - get_pixel(mag, xl[0], yl[0], 0));
-                if (target >= right_pixel && target >= left_pixel) set_pixel(r, i, j, 0, target);
-                else set_pixel(r, i, j, 0, -999999.);
-                //}
-            }
-            else if ((theta_radian > PI/4. && theta_radian < PI/2.) || (theta_radian < -PI/2 && theta_radian > - 3./4.*PI)){
-                //for (neigh = 0; neigh < w; ++neigh){
-                xr[0] = i;
-                yr[0] = j-1;
-                xr[1] = i+1;
-                yr[1] = j-1;
-                xl[0] = i;
-                yl[0] = j+1;
-                xl[1] = i-1;
-                yl[1] = j+1;
-                target = get_pixel(mag, i, j, 0);
-                right_pixel = get_pixel(mag, xr[0], yr[0], 0) 
-                            + tan(PI/2 - theta_radian) * (get_pixel(mag, xr[1], yr[1], 0) - get_pixel(mag, xr[0], yr[0], 0));
-                left_pixel = get_pixel(mag, xl[0], yl[0], 0) 
-                            + tan(PI/2 - theta_radian) * (get_pixel(mag, xl[1], yl[1], 0) - get_pixel(mag, xl[0], yl[0], 0));
-                if (target >= right_pixel && target >= left_pixel) set_pixel(r, i, j, 0, target);
-                else set_pixel(r, i, j, 0, -999999.);
-                //}
-            }
-            else if ((theta_radian > PI/2. && theta_radian <= 3./4.*PI) || (theta_radian <= -PI/4. && theta_radian > -PI/2.)){
-                //for (neigh = 0; neigh < w; ++neigh){
-                xr[0] = i;
-                yr[0] = j+1;
-                xr[1] = i+1;
-                yr[1] = j+1;
-                xl[0] = i;
-                yl[0] = j-1;
-                xl[1] = i-1;
-                yl[1] = j-1;
-                target = get_pixel(mag, i, j, 0);
-                right_pixel = get_pixel(mag, xr[0], yr[0], 0) 
-                            + fabs(tan(PI/2 + theta_radian)) * (get_pixel(mag, xr[1], yr[1], 0) - get_pixel(mag, xr[0], yr[0], 0));
-                left_pixel = get_pixel(mag, xl[0], yl[0], 0) 
-                            + fabs(tan(PI/2 + theta_radian)) * (get_pixel(mag, xl[1], yl[1], 0) - get_pixel(mag, xl[0], yl[0], 0));
-                if (target >= right_pixel && target >= left_pixel) set_pixel(r, i, j, 0, target);
-                else set_pixel(r, i, j, 0, -999999.);
-                //}
-            }
-            else if ((theta_radian > 3./4.*PI && theta_radian <= PI) || (theta_radian < 0 && theta_radian >= -PI/4.)){
-                //for (neigh = 0; neigh < w; ++neigh){
-                xr[0] = i+1;
-                yr[0] = j;
-                xr[1] = i+1;
-                yr[1] = j+1;
-                xl[0] = i-1;
-                yl[0] = j;
-                xl[1] = i-1;
-                yl[1] = j-1;
-                target = get_pixel(mag, i, j, 0);
-                right_pixel = get_pixel(mag, xr[0], yr[0], 0) 
-                            + fabs(tan(theta_radian)) * (get_pixel(mag, xr[1], yr[1], 0) - get_pixel(mag, xr[0], yr[0], 0));
-                left_pixel = get_pixel(mag, xl[0], yl[0], 0) 
-                            + fabs(tan(theta_radian)) * (get_pixel(mag, xl[1], yl[1], 0) - get_pixel(mag, xl[0], yl[0], 0));
-                if (target >= right_pixel && target >= left_pixel) set_pixel(r, i, j, 0, target);
-                else set_pixel(r, i, j, 0, -999999.);
-                //}
-            }
-        }
-    }
-    
-    for (j = 0; j < im.h; ++j){
-        for (i = 0; i < im.w; ++i){
-            if(get_pixel(r, i, j, 0) >= HighThre){
-                set_pixel(r, i, j, 0, 1.);
-                strong_ind = strong_ind + 1;
-            }
-            else if (get_pixel(r, i, j, 0) < LowThre) set_pixel(r, i, j, 0, 0.);
-            else weak_ind = weak_ind + 1;
-        }
-    }
-    StrongCol = malloc(strong_ind * sizeof(int));
-    StrongRow = malloc(strong_ind * sizeof(int));
-    WeakCol = malloc(weak_ind * sizeof(int));
-    WeakRow = malloc(weak_ind * sizeof(int));
-    strong_ind = 0;
-    weak_ind = 0;
-    for (j = 0; j < im.h; ++j){
-        for (i = 0; i < im.w; ++i){
-            if(get_pixel(r, i, j, 0) >= HighThre){
-                StrongCol[strong_ind] = j;
-                StrongRow[strong_ind] = i;
-                strong_ind = strong_ind + 1;
-            }
-            else if (get_pixel(r, i, j, 0) >= LowThre && get_pixel(r, i, j, 0) < HighThre){
-                WeakCol[weak_ind] = j;
-                WeakRow[weak_ind] = i;
-                weak_ind = weak_ind + 1;
-            }
-        }
-    }
-    
-    flag = malloc(im.w * sizeof(*flag));
-    for (i = 0; i < im.w; i++) flag[i] = malloc(im.h * sizeof(flag[0]));
-    for (i = 0; i< im.w; ++i)
-        for (j = 0; j<im.h; ++j) 
-            flag[i][j] = 0;
-
-    for (i = 0; i< strong_ind; ++i){
-        connectStrong(r, StrongRow[i], StrongCol[i], flag);
-    }
-    for (i = 0; i< weak_ind; ++i){
-        if (get_pixel(r, WeakRow[i], WeakCol[i], 0) != 1) set_pixel(r, WeakRow[i], WeakCol[i], 0, 0.);
-    }
     // for every pixel in the image:
     //     for neighbors within w:
     //         if neighbor response greater than pixel response:
     //             set response to be very low (I use -999999 [why not 0??])
-    //feature_normalize(r);
-    for (i = 0; i < im.w; i++) free(flag[i]);
-    free(flag);
-    free(StrongRow);
-    free(StrongCol);
-    free(WeakRow);
-    free(WeakCol);
     return r;
 }
 
@@ -371,13 +226,11 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
 
     // Run NMS on the responses
     image Rnms = nms_image(R, nms);
-
     int i, j;
     //TODO: count number of responses over threshold
     int count = 0; // change this
     for (j = 0; j<im.h; ++j){
         for (i = 0; i<im.w; ++i){
-            printf ("nms = %f", get_pixel(Rnms, i, j, 0));
             if (get_pixel(Rnms, i, j, 0) > thresh) count++;
         }
     }
@@ -390,13 +243,12 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
             }
         }
     }
-    printf("cc = %d, count = %d", cc, count);
 
     *n = count; // <- set *n equal to number of corners in image.
     descriptor *d = calloc(count, sizeof(descriptor));
     //TODO: fill in array *d with descriptors of corners, use describe_index.
     for (i = 0; i < count; ++i){
-        describe_index(im, target_pixel[i]);
+        d[i] = describe_index(im, target_pixel[i]);
     }
     free(target_pixel);
     free_image(S);

@@ -554,8 +554,6 @@ void test_cornerness()
     free_image(gt);
 }
 
-
-
 void test_projection()
 {
     matrix H = make_translation_homography(12.4, -3.2);

@@ -230,15 +230,13 @@ int model_inliers(matrix H, match *m, int n, float thresh)
     int i;
     int count = 0;
     match temp;
-    printf("thr = %f\n", thresh);
     for (i = 0; i<n; ++i){
-        printf("dis = %f\n", point_distance(project_point(H, m[i].p), m[i].q));
         if (point_distance(project_point(H, m[i].p), m[i].q) < thresh){
             temp = m[i];
             m[count] = m[i];
             m[i] = temp;
             count++;
-            printf("inliers, count = %d", count);
+            //printf("inliers, count = %d\n", count);
         }
     }
     // TODO: count number of matches that are inliers
@@ -254,9 +252,10 @@ void randomize_matches(match *m, int n)
 {
     // TODO: implement Fisher-Yates to shuffle the array.
     match temp;
+    //srand(55688);
     int i, j;
     for (i = 0; i < n-1; ++i){
-        j = (int)((n-i) * rand()/RAND_MAX) + i;  // i~n
+        j = (int)((n-i) * (float)rand()/(float)RAND_MAX) + i;  // i~n
         temp = m[j];
         m[j] = m[i];
         m[i] = temp;
@@ -271,7 +270,7 @@ matrix compute_homography(match *matches, int n)
 {
     matrix M = make_matrix(n*2, 8);
     matrix b = make_matrix(n*2, 1);
-
+    //printf("d1 = %f, d2 = %f\n", matches[0].distance, matches[1].distance);
     int i;
     for(i = 0; i < n; ++i){
         double x  = matches[i].p.x;
@@ -331,22 +330,20 @@ matrix compute_homography(match *matches, int n)
 // returns: matrix representing most common homography between matches.
 matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
 {
-    int e;
+    //int e;
     int best = 0, count;
+    
     matrix Hb = make_translation_homography(256, 0), H;
     // TODO: fill in RANSAC algorithm.
     for (int i = 0; i<k; ++i){
         randomize_matches(m, n);
-        H = compute_homography(m, 2 * sizeof(match));
-        count = model_inliers(H, m, n, thresh);
-        //printf("count = %d\n", count);
+        H = compute_homography(m, 4);
+        if (H.data) count = model_inliers(H, m, n, thresh);
+        
         if (count > best){
-            printf("count b4 = %d\n", count);
-            Hb = compute_homography(m, count * sizeof(match));
+            Hb = compute_homography(m, count);
             count = model_inliers(Hb, m, n, thresh);
             best = count;
-            printf("new = %d\n", count);
-            printf("==============\n");
             if (count > cutoff) return Hb;
         }
     }
@@ -388,7 +385,6 @@ image combine_images(image a, image b, matrix H)
     int dy = MIN(0, topleft.y);
     int w = MAX(a.w, botright.x) - dx;
     int h = MAX(a.h, botright.y) - dy;
-    printf("dx = %d, dy = %d", dx, dy);
     // Can disable this if you are making very big panoramas.
     // Usually this means there was an error in calculating H.
     if(w > 7000 || h > 7000){
@@ -404,7 +400,7 @@ image combine_images(image a, image b, matrix H)
         for(j = 0; j < a.h; ++j){
             for(i = 0; i < a.w; ++i){
                 // TODO: fill in.
-                set_pixel(c, i, j, k, get_pixel(a, i, j, k) - dx);
+                set_pixel(c, i - dx, j - dy, k, get_pixel(a, i, j, k));
             }
         }
     }
@@ -414,19 +410,22 @@ image combine_images(image a, image b, matrix H)
     // and see if their projection from a coordinates to b coordinates falls
     // inside of the bounds of image b. If so, use bilinear interpolation to
     // estimate the value of b at that projection, then fill in image c.
-    /*
+
     point AtoB;
     for(k = 0; k < c.c; ++k){
         for(j = 0; j < c.h; ++j){
             for(i = 0; i < c.w; ++i){
                 // TODO: fill in.
-                AtoB = project_point(H, make_point(i, j));
+                AtoB = project_point(H, make_point(i+dx, j+dy));
+                //AtoB.x = AtoB.x + dx;
+                //AtoB.y = AtoB.y + dy; 
+                //if (AtoB.x > b.w) printf("AtoB.x = %f\n", AtoB.x);
                 if (AtoB.x >= 0 && AtoB.x < b.w && AtoB.y >=0 && AtoB.y < b.h){
                     set_pixel(c, i, j, k, bilinear_interpolate(b, AtoB.x, AtoB.y, k));
                 }
             }
         }
-    }*/
+    }
 
     return c;
 }
@@ -456,7 +455,7 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
     // Run RANSAC to find the homography
     matrix H = RANSAC(m, mn, inlier_thresh, iters, cutoff);
 
-    if(0){
+    if(1){
         // Mark corners and matches between images
         mark_corners(a, ad, an);
         mark_corners(b, bd, bn);

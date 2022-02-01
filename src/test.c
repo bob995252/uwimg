@@ -580,6 +580,7 @@ void test_compute_homography()
     match *m = calloc(4, sizeof(match));
     m[0].p = make_point(0,0);
     m[0].q = make_point(10,10);
+    //printf("test = %f\n", l2point_distance(make_point(3,3),make_point(4,4)));
     m[1].p = make_point(3,3);
     m[1].q = make_point(13,13);
     m[2].p = make_point(-1.2,-3.4);

@@ -82,5 +82,5 @@ easy_panorama()
 #im = nms_image(im, 2)
 #save_image(im, "test_nms")
 
-#rainier_panorama()
+rainier_panorama()
 #field_panorama()

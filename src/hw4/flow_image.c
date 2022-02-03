@@ -47,7 +47,19 @@ void draw_line(image im, float x, float y, float dx, float dy)
 image make_integral_image(image im)
 {
     image integ = make_image(im.w, im.h, im.c);
+    int i,j,k;
+    float topleft, top, left;
     // TODO: fill in the integral image
+    for (k = 0; k < im.c; ++k){
+        for (j = 0; j < im.h; ++j){
+            for (i = 0; i < im.w; ++i){
+                top = (j-1<0) ? 0 : get_pixel(integ,i,j-1,k);
+                left = (i-1<0) ? 0 : get_pixel(integ,i-1,j,k);
+                topleft = (i-1<0 || j-1<0) ? 0 : get_pixel(integ,i-1, j-1, k);
+                set_pixel(integ, i, j, k, get_pixel(im, i,j,k) + top + left - topleft);
+            }
+        }
+    }
     return integ;
 }
 
@@ -55,12 +67,30 @@ image make_integral_image(image im)
 // image im: image to smooth
 // int s: window size for box filter
 // returns: smoothed image
+int three_way_min2(int a, int b, int c)
+{
+    return (a < b) ? ( (a < c) ? a : c) : ( (b < c) ? b : c) ;
+}
 image box_filter_image(image im, int s)
 {
     int i,j,k;
     image integ = make_integral_image(im);
     image S = make_image(im.w, im.h, im.c);
+    float topleft, top, left;
+    int NumOfAvg;
     // TODO: fill in S using the integral image.
+    //printf("(w, h) = (%d, %d)\n", im.w, im.h);
+    for (k = 0; k < im.c; ++k){
+        for (j = 0; j < im.h; ++j){
+            for (i = 0; i < im.w; ++i){
+                NumOfAvg = three_way_min2(i+s/2+1, s, im.w - (i-s/2)) * three_way_min2(j+s/2+1, s, im.h - (j-s/2));
+                topleft = (i-s/2-1<0 || j-s/2-1<0) ? 0 : get_pixel(integ, i-s/2-1, j-s/2-1, k);
+                top = (j-s/2-1<0) ? 0 : get_pixel(integ, i+s/2, j-s/2-1, k);
+                left = (i-s/2-1<0) ? 0 : get_pixel(integ, i-s/2-1, j+s/2, k);
+                set_pixel(S, i, j, k, (get_pixel(integ, i+s/2, j+s/2, k)+topleft-top-left)/NumOfAvg);
+            }
+        }
+    }
     return S;
 }
 

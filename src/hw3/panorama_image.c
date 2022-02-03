@@ -133,9 +133,8 @@ float l1_distance(float *a, float *b, int n)
 //          one other descriptor in b.
 match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
 {
-    int i,j, bind, w;
+    int i,j, bind;
     float l1_dis;
-    w = 5;
 
     // We will have at most an matches.
     *mn = an;
@@ -145,8 +144,8 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
         // record ai as the index in *a and bi as the index in *b.
         l1_dis = 999999;
         for (i = 0; i<bn; ++i){
-            if(l1_distance(a[j].data, b[i].data, w * w * 3) < l1_dis){
-                l1_dis = l1_distance(a[j].data, b[i].data, w * w * 3);
+            if(l1_distance(a[j].data, b[i].data, a[j].n) < l1_dis){
+                l1_dis = l1_distance(a[j].data, b[i].data, a[j].n);
                 bind = i;
             }
         }
@@ -332,14 +331,12 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
 {
     //int e;
     int best = 0, count;
-    
     matrix Hb = make_translation_homography(256, 0), H;
     // TODO: fill in RANSAC algorithm.
     for (int i = 0; i<k; ++i){
         randomize_matches(m, n);
         H = compute_homography(m, 4);
         if (H.data) count = model_inliers(H, m, n, thresh);
-        
         if (count > best){
             Hb = compute_homography(m, count);
             count = model_inliers(Hb, m, n, thresh);
@@ -413,20 +410,16 @@ image combine_images(image a, image b, matrix H)
 
     point AtoB;
     for(k = 0; k < c.c; ++k){
-        for(j = 0; j < c.h; ++j){
-            for(i = 0; i < c.w; ++i){
+        for(j = topleft.y-dy; j < c.h; ++j){
+            for(i = topleft.x-dx; i < c.w; ++i){
                 // TODO: fill in.
                 AtoB = project_point(H, make_point(i+dx, j+dy));
-                //AtoB.x = AtoB.x + dx;
-                //AtoB.y = AtoB.y + dy; 
-                //if (AtoB.x > b.w) printf("AtoB.x = %f\n", AtoB.x);
-                if (AtoB.x >= 0 && AtoB.x < b.w && AtoB.y >=0 && AtoB.y < b.h){
+                if ((AtoB.x >= 0 && AtoB.x <= b.w) && (AtoB.y >=0 && AtoB.y <= b.h)){
                     set_pixel(c, i, j, k, bilinear_interpolate(b, AtoB.x, AtoB.y, k));
                 }
             }
         }
     }
-
     return c;
 }
 
@@ -451,11 +444,10 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
 
     // Find matches
     match *m = match_descriptors(ad, an, bd, bn, &mn);
-
     // Run RANSAC to find the homography
     matrix H = RANSAC(m, mn, inlier_thresh, iters, cutoff);
 
-    if(1){
+    if(0){
         // Mark corners and matches between images
         mark_corners(a, ad, an);
         mark_corners(b, bd, bn);

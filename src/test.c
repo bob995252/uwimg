@@ -14,6 +14,7 @@ float avg_diff(image a, image b)
     int i;
     for(i = 0; i < a.w*a.h*a.c; ++i){
         diff += b.data[i] - a.data[i];
+        //if(i==0) printf("b.data[i] = %f, a.data[i] = %f\n", b.data[i], a.data[i]);
     }
     return diff/(a.w*a.h*a.c);
 }
